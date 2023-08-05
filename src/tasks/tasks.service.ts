@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -51,9 +52,16 @@ export class TasksService {
   }
 
   async update(id: string, updateTaskDto: UpdateTaskDto) {
-    const task = await this.findOne(id)
-    await this.taskModel.updateOne(updateTaskDto);
-    return task
+    const pokemon = await this.findOne(id)
+
+    // if (updatePokemonDto.name) updatePokemonDto.name = updatePokemonDto.name.toLocaleLowerCase()
+
+    try {
+      await pokemon.updateOne(updateTaskDto)
+      return { ...pokemon.toJSON(), ...updateTaskDto }
+    } catch (error) {
+      this.handleException(error)
+    }
   }
 
   async remove(id: string) {
@@ -72,5 +80,14 @@ export class TasksService {
       task = await this.taskModel.findByIdAndDelete(id)
     }
   }
+
+  private handleException(error: any) {
+    if (error.code === 11000) {
+      throw new BadRequestException(`Task already exists. ${JSON.stringify(error.keyValue)}`);
+    }
+    console.log(error)
+    throw new InternalServerErrorException(`Can't create task - check server logs`)
+  }
+
   
 }
