@@ -44,50 +44,49 @@ export class TasksService {
     //MongoId
     if (!task && isValidObjectId(id)) task = await this.taskModel.findById(id);
     if (!task)
-      throw new NotFoundException(
-        `Task with id, name or no "${id}" not found`,
-      );
+      throw new NotFoundException(`Task with id, name or no "${id}" not found`);
 
     return task;
   }
 
   async update(id: string, updateTaskDto: UpdateTaskDto) {
-    const pokemon = await this.findOne(id)
+    const pokemon = await this.findOne(id);
 
     // if (updatePokemonDto.name) updatePokemonDto.name = updatePokemonDto.name.toLocaleLowerCase()
 
     try {
-      await pokemon.updateOne(updateTaskDto)
-      return { ...pokemon.toJSON(), ...updateTaskDto }
+      await pokemon.updateOne(updateTaskDto);
+      return { ...pokemon.toJSON(), ...updateTaskDto };
     } catch (error) {
-      this.handleException(error)
+      this.handleException(error);
     }
   }
 
   async remove(id: string) {
-    let task: Task;
+    const task = await this.findOne(id);
 
-    if (!isNaN(+id)) {
-      task = await this.taskModel.findOne({ id });
-    }
-    //MongoId
-    if (!task && isValidObjectId(id)) task = await this.taskModel.findById(id);
-    if (!task) {
-      throw new NotFoundException(
-        `Task with id, name or no "${id}" not found`,
-      );
-    } else {
-      task = await this.taskModel.findByIdAndDelete(id)
+    try {
+      if (!task) {
+        throw new NotFoundException(
+          `Task with id, name or no "${id}" not found`,
+        );
+      } else {
+        await this.taskModel.findByIdAndDelete(id);
+      }
+    } catch (error) {
+      this.handleException(error);
     }
   }
 
   private handleException(error: any) {
     if (error.code === 11000) {
-      throw new BadRequestException(`Task already exists. ${JSON.stringify(error.keyValue)}`);
+      throw new BadRequestException(
+        `Task already exists. ${JSON.stringify(error.keyValue)}`,
+      );
     }
-    console.log(error)
-    throw new InternalServerErrorException(`Can't create task - check server logs`)
+    console.log(error);
+    throw new InternalServerErrorException(
+      `Can't create task - check server logs`,
+    );
   }
-
-  
 }
